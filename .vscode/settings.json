@@ -1,3 +1,5 @@
 {
-  "cSpell.words": ["authtoken", "AUTOINCREMENT", "subresource"]
+  "cSpell.words": ["authtoken", "AUTOINCREMENT", "subresource"],
+  "css.lint.unknownAtRules": "ignore"
+
 }

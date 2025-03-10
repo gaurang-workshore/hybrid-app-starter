@@ -1,10 +1,15 @@
-@tailwind base;
+/* @import "tailwindcss/preflight";
+@import "@tailwindcss/postcss";
+@plugin "tailwindcss-animate";
+ */
 
+@import "tailwindcss/preflight";
+@import "@tailwindcss/postcss";
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
-@tailwind components;
 @tailwind utilities;
+@tailwind components;
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;

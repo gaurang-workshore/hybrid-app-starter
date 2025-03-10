@@ -1,4 +1,5 @@
-import { Typography } from "@mui/material";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 interface LoadingStatesProps {
   isLoading: boolean;
@@ -11,10 +12,24 @@ export function LoadingStates({
   isError,
   error,
 }: LoadingStatesProps) {
-  if (isLoading) return <Typography>Loading...</Typography>;
-  if (isError)
+  if (isLoading) {
     return (
-      <Typography color="error">{error || "An error occurred"}</Typography>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Loading...</span>
+      </div>
     );
+  }
+  
+  if (isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          {error || "An error occurred"}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
   return null;
 }

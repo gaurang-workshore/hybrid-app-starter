@@ -1,33 +1,34 @@
 import {
   Table,
-  TableHead,
   TableBody,
-  TableRow,
   TableCell,
-  Paper,
-} from "@mui/material";
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { Site } from "../types/types";
 
 const DataTable = ({ data }: { data: Site[] }) => {
   webflow.setExtensionSize("large");
 
   return (
-    <Paper sx={{ maxHeight: "275px", overflow: "auto" }}>
-      <Table stickyHeader>
-        <TableHead>
+    <Card className="overflow-auto max-h-[275px]">
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell>Display Name</TableCell>
-            <TableCell>ID</TableCell>
-            <TableCell>Created On</TableCell>
-            <TableCell>Last Updated</TableCell>
-            <TableCell>Last Published</TableCell>
+            <TableHead>Display Name</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Created On</TableHead>
+            <TableHead>Last Updated</TableHead>
+            <TableHead>Last Published</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {data.map((item) => (
             <TableRow key={item.id}>
               <TableCell>{item.displayName}</TableCell>
-              <TableCell>{item.id}</TableCell>
+              <TableCell className="font-mono text-xs">{item.id}</TableCell>
               <TableCell>
                 {new Date(item.createdOn).toLocaleDateString()}
               </TableCell>
@@ -43,8 +44,8 @@ const DataTable = ({ data }: { data: Site[] }) => {
           ))}
         </TableBody>
       </Table>
-    </Paper>
+    </Card>
   );
-};
+}
 
 export default DataTable;
