@@ -28,15 +28,16 @@ export function Dashboard({
           <CardTitle className="text-2xl">Hello {user.firstName} 👋</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={onFetchSites}
-            disabled={isLoading}
-          >
+          <Button onClick={onFetchSites} disabled={isLoading}>
             {isLoading ? "Loading Sites..." : "List Authorized Sites"}
           </Button>
 
           <div className="mt-4">
-            <LoadingStates isLoading={isLoading} isError={isError} error={error} />
+            <LoadingStates
+              isLoading={isLoading}
+              isError={isError}
+              error={error}
+            />
           </div>
         </CardContent>
       </Card>
