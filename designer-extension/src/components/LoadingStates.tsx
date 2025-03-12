@@ -14,9 +14,9 @@ export function LoadingStates({
 }: LoadingStatesProps) {
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-foreground-secondary">
-        <Loader2 className="h-4 w-4 animate-spin text-foreground-secondary" />
-        <span className="text-sm">Loading...</span>
+      <div className="flex items-center gap-2 text-foreground-secondary align-middle">
+        <Loader2 className="h-5 w-5 items-center animate-spin text-foreground-secondary" />
+        <span className="text-sm">Loadingss...</span>
       </div>
     );
   }

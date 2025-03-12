@@ -19,14 +19,14 @@ export function ElementTreeToolbar({
   onCopy,
 }: ElementTreeToolbarProps) {
   return (
-    <div className="flex items-center gap-2 mb-4">
+    <div className="flex items-center gap-2 mb-4 justify-center">
       <Button size="sm" onClick={onSave} variant="default" className="gap-2">
-        <Save className="h-4 w-4 text-primary-foreground" />
+        <Save className="h-3 w-3 text-primary-foreground" />
         Save Structure
       </Button>
 
       <Button size="sm" onClick={onCopy} variant="secondary" className="gap-2">
-        <Copy className="h-4 w-4 text-secondary-foreground" />
+        <Copy className="h-3 w-3 text-secondary-foreground" />
         Copy to Clipboard
       </Button>
     </div>

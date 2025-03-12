@@ -1,61 +1,16 @@
 import { useState, useEffect } from "react";
-import { Box, Tab, Tabs, Paper, CircularProgress } from "@mui/material";
-import {
-  useScriptRegistration,
-  useScriptSelection,
-} from "../../hooks/useCustomCode";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Code2, FileCode, PlusCircle } from "lucide-react";
 import { ScriptRegistration, ScriptsList, SiteTab, PagesTab } from "./";
 import { useAuth } from "../../hooks/useAuth";
 import { CustomCode } from "../../types/types";
 import { useSites } from "../../hooks/useSites";
+import {
+  useScriptRegistration,
+  useScriptSelection,
+} from "../../hooks/useCustomCode";
 
-/**
- * Props interface for the TabPanel component
- * @property {React.ReactNode} children - Content to be displayed in the tab panel
- * @property {number} index - Index of the tab panel
- * @property {number} value - Currently selected tab value
- */
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-/**
- * TabPanel component for managing content visibility based on selected tab
- * @param props - TabPanel properties
- */
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-      {value === index && children}
-    </div>
-  );
-}
-
-/**
- * CustomCodeDashboard is the main component for managing custom code scripts in a Webflow site.
- * It provides functionality to:
- * - Register new scripts (hosted or inline)
- * - View and select from existing scripts
- * - Apply scripts to either the entire site or specific pages
- * - Manage script locations (header/footer)
- *
- * The dashboard is organized into two main sections:
- * 1. Register Script: For adding new custom code
- * 2. Manage Scripts: For applying and managing existing scripts
- *
- * @example
- * ```tsx
- * // Basic usage in a React application
- * function App() {
- *   return (
- *     <CustomCodeDashboard />
- *   );
- * }
- * ```
- */
 export function CustomCodeDashboard() {
   const { sessionToken } = useAuth();
   const {
@@ -64,9 +19,11 @@ export function CustomCodeDashboard() {
     isLoading: isSitesLoading,
   } = useSites(sessionToken, true);
 
-  // Navigation state
-  const [mainTab, setMainTab] = useState<"register" | "manage">("register");
-  const [applicationTab, setApplicationTab] = useState(0);
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"register" | "manage">("register");
+  const [applicationTab, setApplicationTab] = useState<"site" | "pages">(
+    "site"
+  );
 
   // Hook integrations for script management
   const {
@@ -84,36 +41,37 @@ export function CustomCodeDashboard() {
 
   // Fetch scripts when switching to manage tab or when site/session changes
   useEffect(() => {
-    if (mainTab === "manage" && currentSite?.id && sessionToken) {
+    if (activeTab === "manage" && currentSite?.id && sessionToken) {
       fetchScripts(currentSite.id, sessionToken);
     }
-  }, [mainTab, currentSite?.id, sessionToken, fetchScripts]);
+  }, [activeTab, currentSite?.id, sessionToken, fetchScripts]);
 
   // Show loading state while sites are being fetched
   if (isCurrentSiteLoading || isSitesLoading) {
     return (
-      <Box sx={{ width: "100%", p: 2, textAlign: "center" }}>
-        <CircularProgress size={20} sx={{ mr: 1 }} />
-        Loading site information...
-      </Box>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="animate-spin text-primary" />
+        <span className="ml-2 text-foreground-secondary">
+          Loading site information...
+        </span>
+      </div>
     );
   }
 
   // Show message if no current site is available
   if (!currentSite) {
     return (
-      <Box sx={{ width: "100%", p: 2 }}>
-        Unable to load site information. Please make sure you're in a Webflow
-        Designer session.
-      </Box>
+      <Card>
+        <CardContent className="py-6">
+          <div className="text-center text-foreground-secondary">
+            Unable to load site information. Please make sure you're in a
+            Webflow Designer session.
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  /**
-   * Handles the registration of new custom code
-   * @param code - The custom code to register
-   * @param isHosted - Whether the code is hosted externally
-   */
   const handleRegisterCode = async (code: string, isHosted: boolean) => {
     try {
       await registerScript(code, isHosted);
@@ -123,41 +81,10 @@ export function CustomCodeDashboard() {
     }
   };
 
-  /**
-   * Handles navigation between main dashboard tabs
-   * @param _event - React synthetic event
-   * @param newValue - New tab value to switch to
-   */
-  const handleMainTabChange = (
-    _event: React.SyntheticEvent,
-    newValue: "register" | "manage"
-  ) => {
-    setMainTab(newValue);
-  };
-
-  /**
-   * Handles navigation between application tabs (Site/Pages)
-   * @param _event - React synthetic event
-   * @param newValue - New tab index to switch to
-   */
-  const handleApplicationTabChange = (
-    _event: React.SyntheticEvent,
-    newValue: number
-  ) => {
-    setApplicationTab(newValue);
-  };
-
-  /**
-   * Updates the currently selected script
-   * @param script - The script to select for management
-   */
   const handleScriptSelect = (script: CustomCode) => {
     selectScript(script);
   };
 
-  /**
-   * Wrapper for applying scripts to site
-   */
   const handleApplyToSite = (
     targetType: "site",
     targetId: string,
@@ -172,9 +99,6 @@ export function CustomCodeDashboard() {
     });
   };
 
-  /**
-   * Wrapper for applying scripts to pages
-   */
   const handleApplyToPages = (
     targetType: "page",
     pageIds: string[],
@@ -189,58 +113,95 @@ export function CustomCodeDashboard() {
   };
 
   return (
-    <Box sx={{ width: "100%", pb: "100px" }}>
-      <Tabs value={mainTab} onChange={handleMainTabChange}>
-        <Tab value="register" label="Register Script" />
-        <Tab value="manage" label="Manage Scripts" />
-      </Tabs>
+    <div className="space-y-6">
+      <div className="flex items-center mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-md bg-background-tertiary">
+            <FileCode className="text-primary" />
+          </div>
+          <h1 className="text-xl font-medium">Custom Code Manager</h1>
+        </div>
+      </div>
 
-      {mainTab === "register" && (
-        <ScriptRegistration
-          onRegister={handleRegisterCode}
-          isRegistering={isRegistering}
-        />
-      )}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value: string) =>
+          setActiveTab(value as "register" | "manage")
+        }
+        className="w-full"
+      >
+        <TabsList className="mb-6 w-full bg-background-secondary p-1">
+          <TabsTrigger
+            value="register"
+            className="flex items-center gap-2 px-4 py-2"
+          >
+            <PlusCircle />
+            Register Script
+          </TabsTrigger>
+          <TabsTrigger
+            value="manage"
+            className="flex items-center gap-2 px-4 py-2"
+          >
+            <Code2 />
+            Manage Scripts
+          </TabsTrigger>
+        </TabsList>
 
-      {mainTab === "manage" && (
-        <>
-          <Paper elevation={0} sx={{ mb: 2 }}>
-            <ScriptsList
-              scripts={registeredScripts}
-              selectedScript={selectedScript}
-              onScriptSelect={handleScriptSelect}
-            />
-          </Paper>
+        <TabsContent value="register" className="mt-0">
+          <ScriptRegistration
+            onRegister={handleRegisterCode}
+            isRegistering={isRegistering}
+          />
+        </TabsContent>
+
+        <TabsContent value="manage" className="mt-0">
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <ScriptsList
+                scripts={registeredScripts}
+                selectedScript={selectedScript}
+                onScriptSelect={handleScriptSelect}
+              />
+            </CardContent>
+          </Card>
 
           {registeredScripts.length > 0 && (
-            <Paper elevation={0}>
-              <Tabs
-                value={applicationTab}
-                onChange={handleApplicationTabChange}
-                sx={{ borderBottom: 1, borderColor: "divider" }}
-              >
-                <Tab label="Apply to Site" />
-                <Tab label="Apply to Pages" />
-              </Tabs>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Script Application</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Tabs
+                  value={applicationTab}
+                  onValueChange={(value: string) =>
+                    setApplicationTab(value as "site" | "pages")
+                  }
+                >
+                  <TabsList className="mb-4 px-6 pt-6">
+                    <TabsTrigger value="site">Apply to Site</TabsTrigger>
+                    <TabsTrigger value="pages">Apply to Pages</TabsTrigger>
+                  </TabsList>
 
-              <TabPanel value={applicationTab} index={0}>
-                <SiteTab
-                  currentSite={currentSite}
-                  selectedScript={selectedScript}
-                  onApplyCode={handleApplyToSite}
-                />
-              </TabPanel>
+                  <TabsContent value="site" className="mt-0 px-6 pb-6">
+                    <SiteTab
+                      currentSite={currentSite}
+                      selectedScript={selectedScript}
+                      onApplyCode={handleApplyToSite}
+                    />
+                  </TabsContent>
 
-              <TabPanel value={applicationTab} index={1}>
-                <PagesTab
-                  selectedScript={selectedScript}
-                  onApplyCode={handleApplyToPages}
-                />
-              </TabPanel>
-            </Paper>
+                  <TabsContent value="pages" className="mt-0 px-6 pb-6">
+                    <PagesTab
+                      selectedScript={selectedScript}
+                      onApplyCode={handleApplyToPages}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           )}
-        </>
-      )}
-    </Box>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

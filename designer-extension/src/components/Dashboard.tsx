@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DataTable from "./DataTable";
 import { LoadingStates } from "./LoadingStates";
 import { Site } from "../types/types";
+import { LayoutGrid, RefreshCw } from "lucide-react";
 
 interface DashboardProps {
   user: { firstName: string };
@@ -22,18 +23,36 @@ export function Dashboard({
   onFetchSites,
 }: DashboardProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
+      <div className="flex items-center mb-1">
+        <div className="flex items-center gap-3">
+          <div className="p-1 rounded-md bg-background-tertiary">
+            <LayoutGrid className="text-primary h-5 w-5" />
+          </div>
+          <h3 className="text-l font-medium">Dashboard</h3>
+        </div>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle>Hello {user.firstName} 👋</CardTitle>
+        <CardHeader className="pb-1">
+          <CardTitle className="text-base">Hello {user.firstName} 👋</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="text-sm text-foreground-secondary mb-2">
+            View your authorized Webflow sites and access various tools to
+            enhance your Webflow experience.
+          </p>
+
           <Button
             variant="default"
             size="sm"
             onClick={onFetchSites}
             disabled={isLoading}
+            className="gap-2 items-center"
           >
+            <RefreshCw
+              className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`}
+            />
             {isLoading ? "Loading Sites..." : "List Authorized Sites"}
           </Button>
 

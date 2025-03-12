@@ -1,13 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDevTools } from "../hooks/useDevTools";
+import { cn } from "@/lib/utils";
 
 interface DevToolsProps {
   logout: () => void;
   setHasClickedFetch: (value: boolean) => void;
+  className?: string;
 }
 
-export function DevTools({ logout, setHasClickedFetch }: DevToolsProps) {
+export function DevTools({
+  logout,
+  setHasClickedFetch,
+  className,
+}: DevToolsProps) {
   const { clearSession, logStorage } = useDevTools({
     logout,
     setHasClickedFetch,
@@ -24,7 +30,7 @@ export function DevTools({ logout, setHasClickedFetch }: DevToolsProps) {
   };
 
   return (
-    <Card className="fixed bottom-0 left-0 right-0 border-t border-border rounded-none">
+    <Card className={cn("border-t border-border rounded-none", className)}>
       <CardHeader className="py-2">
         <CardTitle className="text-sm">Development Tools</CardTitle>
       </CardHeader>
