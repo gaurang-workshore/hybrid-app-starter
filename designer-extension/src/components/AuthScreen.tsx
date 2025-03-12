@@ -27,17 +27,19 @@ export function AuthScreen({ onAuth }: { onAuth: () => void }) {
     <div className="flex items-center justify-center min-h-[60vh]">
       <Card className="w-[350px]">
         <CardHeader>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-base">
             {user.firstName
               ? `Welcome back ${user.firstName} 👋`
               : "Hello Stranger 👋"}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center">
-          <p className="mb-4">
+          <p className="mb-4 text-sm text-foreground-secondary">
             Please authorize this app to access your Webflow sites
           </p>
-          <Button onClick={openAuthScreen}>Authorize App</Button>
+          <Button variant="default" size="sm" onClick={openAuthScreen}>
+            Authorize App
+          </Button>
         </CardContent>
       </Card>
     </div>

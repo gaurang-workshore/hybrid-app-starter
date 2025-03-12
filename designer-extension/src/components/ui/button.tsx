@@ -5,26 +5,26 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex flex-row items-center justify-center gap-2 whitespace-nowrap rounded-[4px] text-sm font-normal transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-current shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-blue-border",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+          "bg-primary text-primary-foreground shadow-[0px_0.5px_1px_#000000,inset_0px_29px_23px_-16px_rgba(255,255,255,0.04),inset_0px_0.5px_0.5px_rgba(255,255,255,0.2)] hover:bg-primary-hover",
         destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+          "bg-red text-white shadow-[0px_0.5px_1px_#000000,inset_0px_29px_23px_-16px_rgba(255,255,255,0.04),inset_0px_0.5px_0.5px_rgba(255,255,255,0.2)] hover:bg-red-hover",
         outline:
-          "border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
+          "border border-border bg-transparent text-foreground shadow-action-secondary hover:bg-background-secondary",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground shadow-action-secondary hover:bg-secondary-hover",
+        ghost: "hover:bg-background-tertiary hover:text-foreground",
+        link: "text-blue-text underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+        default: "h-8 px-4 py-[4px]",
+        sm: "h-6 px-3 py-[4px]",
+        lg: "h-9 px-4 py-[4px]",
+        icon: "h-10 w-10 p-2",
       },
     },
     defaultVariants: {
@@ -45,7 +45,7 @@ const Button = React.forwardRef<
 
   return (
     <Comp
-      ref={ref} // ✅ Fixed: Forwarding the ref properly
+      ref={ref}
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
@@ -53,7 +53,6 @@ const Button = React.forwardRef<
   );
 });
 
-// ✅ Set displayName for debugging purposes
 Button.displayName = "Button";
 
 export { Button, buttonVariants };

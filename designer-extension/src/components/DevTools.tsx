@@ -24,18 +24,18 @@ export function DevTools({ logout, setHasClickedFetch }: DevToolsProps) {
   };
 
   return (
-    <Card className="fixed bottom-0 left-0 right-0 border-t">
+    <Card className="fixed bottom-0 left-0 right-0 border-t border-border rounded-none">
       <CardHeader className="py-2">
         <CardTitle className="text-sm">Development Tools</CardTitle>
       </CardHeader>
       <CardContent className="py-2 flex gap-2">
-        <Button variant="outline" size="sm" onClick={handleLogout}>
+        <Button variant="destructive" size="sm" onClick={handleLogout}>
           Logout
         </Button>
-        <Button variant="outline" size="sm" onClick={handleClearClick}>
+        <Button variant="secondary" size="sm" onClick={handleClearClick}>
           Clear Session
         </Button>
-        <Button variant="outline" size="sm" onClick={logStorage}>
+        <Button variant="default" size="sm" onClick={logStorage}>
           Log Storage
         </Button>
       </CardContent>

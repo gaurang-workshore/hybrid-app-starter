@@ -22,13 +22,18 @@ export function Dashboard({
   onFetchSites,
 }: DashboardProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Hello {user.firstName} 👋</CardTitle>
+          <CardTitle>Hello {user.firstName} 👋</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button onClick={onFetchSites} disabled={isLoading}>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onFetchSites}
+            disabled={isLoading}
+          >
             {isLoading ? "Loading Sites..." : "List Authorized Sites"}
           </Button>
 

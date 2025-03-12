@@ -17,8 +17,8 @@ const DataTable = ({ data }: { data: Site[] }) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Display Name</TableHead>
-            <TableHead>ID</TableHead>
+            <TableHead>Project Name</TableHead>
+            <TableHead>Project ID</TableHead>
             <TableHead>Created On</TableHead>
             <TableHead>Last Updated</TableHead>
             <TableHead>Last Published</TableHead>
@@ -27,15 +27,17 @@ const DataTable = ({ data }: { data: Site[] }) => {
         <TableBody>
           {data.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>{item.displayName}</TableCell>
-              <TableCell className="font-mono text-xs">{item.id}</TableCell>
-              <TableCell>
+              <TableCell className="text-left">{item.displayName}</TableCell>
+              <TableCell className="font-mono text-xs text-left">
+                {item.id}
+              </TableCell>
+              <TableCell className="text-left">
                 {new Date(item.createdOn).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell className="text-left">
                 {new Date(item.lastUpdated).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell className="text-left">
                 {item.lastPublished
                   ? new Date(item.lastPublished).toLocaleDateString()
                   : "N/A"}
@@ -46,6 +48,6 @@ const DataTable = ({ data }: { data: Site[] }) => {
       </Table>
     </Card>
   );
-}
+};
 
 export default DataTable;
