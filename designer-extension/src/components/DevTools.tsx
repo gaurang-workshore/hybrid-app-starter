@@ -35,7 +35,7 @@ export function DevTools({
         <CardTitle className="text-sm">Development Tools</CardTitle>
       </CardHeader>
       <CardContent className="py-2 flex gap-2">
-        <Button variant="destructive" size="sm" onClick={handleLogout}>
+        <Button variant="danger" size="sm" onClick={handleLogout}>
           Logout
         </Button>
         <Button variant="secondary" size="sm" onClick={handleClearClick}>
