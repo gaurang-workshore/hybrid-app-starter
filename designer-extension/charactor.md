@@ -140,7 +140,7 @@ Follow **structured commenting** to maintain readability and consistency across 
 
 ✅ **API Routes (Next.js)**
 
-````typescript
+```typescript
 /**
  * Handles Webflow OAuth authorization.
  * - Redirects user to Webflow for authentication.
@@ -181,6 +181,18 @@ export function useAuth() { ... }
 export async function getAccessTokenFromSiteId(siteId: string) { ... }
 
 
+### 🔹 Summary
+
+| **Type**         | **Comment Style**                                   |
+|-----------------|---------------------------------------------------|
+| **API Routes**   | Briefly describe logic & request flow             |
+| **Components**   | Props & purpose                                   |
+| **Hooks**        | Behavior & caching                                |
+| **Utilities**    | Parameters & return values                        |
+| **Design System**| Styling, component architecture & accessibility  |
+| **Integration**  | Compatibility, imports & interactions            |
+
+```
 
 ### 📂 Project Directory Structure
 
@@ -339,17 +351,4 @@ Below is the **directory structure** of the Webflow Hybrid App:
         └── .vite/
             └── deps_temp_20a04d2d/
                 └── package.json
-
-
-### 🔹 Summary
-
-| **Type**         | **Comment Style**                                   |
-|-----------------|---------------------------------------------------|
-| **API Routes**   | Briefly describe logic & request flow             |
-| **Components**   | Props & purpose                                   |
-| **Hooks**        | Behavior & caching                                |
-| **Utilities**    | Parameters & return values                        |
-| **Design System**| Styling, component architecture & accessibility  |
-| **Integration**  | Compatibility, imports & interactions            |
-
-````
+```
