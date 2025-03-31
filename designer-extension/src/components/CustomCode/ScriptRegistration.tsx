@@ -1,12 +1,9 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  ToggleButtonGroup,
-  ToggleButton,
-  Typography,
-  Paper,
-} from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Code, Link } from "lucide-react";
 import CodeEditor from "@uiw/react-textarea-code-editor";
 
 /**
@@ -24,19 +21,6 @@ interface ScriptRegistrationProps {
  * It supports two types of script registration:
  * 1. Inline JavaScript - Direct code input
  * 2. Hosted Script - External JavaScript file URL
- *
- * Features:
- * - Code editor with syntax highlighting
- * - Toggle between inline and hosted script modes
- * - Input validation and loading states
- *
- * @example
- * ```tsx
- * <ScriptRegistration
- *   onRegister={(code, isHosted) => handleRegistration(code, isHosted)}
- *   isRegistering={false}
- * />
- * ```
  */
 export function ScriptRegistration({
   onRegister,
@@ -44,60 +28,120 @@ export function ScriptRegistration({
 }: ScriptRegistrationProps) {
   // State for managing code input and script type
   const [codeInput, setCodeInput] = useState<string>("");
-  const [isHosted, setIsHosted] = useState<boolean>(false);
+  const [scriptType, setScriptType] = useState<string>("inline");
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Validates the input before submission
+   */
+  const validateInput = (): boolean => {
+    setError(null);
+
+    if (!codeInput.trim()) {
+      setError("Please enter code or a URL");
+      return false;
+    }
+
+    if (scriptType === "hosted") {
+      try {
+        new URL(codeInput);
+      } catch {
+        setError("Please enter a valid URL for hosted scripts");
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   /**
    * Handles the submission of new script registration
-   * Validates input and calls the onRegister callback
    */
   const handleSubmit = async () => {
-    if (!codeInput.trim()) return;
-    await onRegister(codeInput, isHosted);
-    setCodeInput("");
+    if (!validateInput()) return;
+
+    try {
+      await onRegister(codeInput, scriptType === "hosted");
+      setCodeInput("");
+      setError(null);
+    } catch (err) {
+      setError("Failed to register script. Please try again.");
+      console.error("Script registration error:", err);
+    }
   };
 
   return (
-    <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Register a new script to your Webflow Site
-      </Typography>
-      <CodeEditor
-        value={codeInput}
-        language="js"
-        placeholder={
-          isHosted
-            ? "Enter the URL to your JavaScript file (e.g., https://example.com/script.js)"
-            : "console.log('Hello, World!');"
-        }
-        onChange={(e) => setCodeInput(e.target.value)}
-        padding={15}
-        style={{
-          fontSize: 12,
-          backgroundColor: "#f5f5f5",
-          fontFamily:
-            "ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace",
-          marginBottom: 16,
-          borderRadius: 4,
-        }}
-      />
-      <Box sx={{ mb: 2 }}>
-        <ToggleButtonGroup
-          value={isHosted}
-          exclusive
-          onChange={(e, value) => setIsHosted(value)}
-          size="small"
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">
+          Register a new script to your Webflow Site
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Tabs
+          value={scriptType}
+          onValueChange={setScriptType}
+          className="w-full mb-2"
         >
-          <ToggleButton value={false}>Inline JavaScript</ToggleButton>
-          <ToggleButton value={true}>Hosted Script URL</ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        disabled={!codeInput.trim() || isRegistering}
-      >
-        {isRegistering ? "Registering..." : "Register Code"}
-      </Button>
-    </Paper>
+          <TabsList className="w-full bg-background-tertiary grid grid-cols-2">
+            <TabsTrigger value="inline" className="flex items-center gap-1">
+              <Code className="h-3.5 w-3.5" />
+              Inline JavaScript
+            </TabsTrigger>
+            <TabsTrigger value="hosted" className="flex items-center gap-1">
+              <Link className="h-3.5 w-3.5" />
+              Hosted Script URL
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {error && (
+          <Alert variant="destructive" className="my-2">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="min-h-[200px] border border-border rounded-md overflow-hidden">
+          <CodeEditor
+            value={codeInput}
+            language={scriptType === "inline" ? "js" : "text"}
+            placeholder={
+              scriptType === "hosted"
+                ? "Enter the URL to your JavaScript file (e.g., https://example.com/script.js)"
+                : "// Add your JavaScript code here\nconsole.log('Hello, World!');"
+            }
+            onChange={(e) => setCodeInput(e.target.value)}
+            padding={15}
+            style={{
+              fontSize: 12,
+              backgroundColor: "#1E1E1E",
+              fontFamily:
+                "ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace",
+              minHeight: "200px",
+              borderRadius: 4,
+            }}
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            variant="default"
+            className="flex items-center gap-2"
+            size="sm"
+            onClick={handleSubmit}
+            disabled={!codeInput.trim() || isRegistering}
+          >
+            {isRegistering ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Registering...
+              </>
+            ) : (
+              "Register Script"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

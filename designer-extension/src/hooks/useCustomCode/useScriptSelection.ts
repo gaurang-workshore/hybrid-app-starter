@@ -1,63 +1,50 @@
 import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { customCodeApi } from "../../services/customCode";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  applyScriptToTarget,
+  fetchScripts,
+} from "../../services/customCode/api";
 import { CustomCode } from "../../types/types";
-import { getApplicationStatusKey } from "./useApplicationStatus";
-
-interface ScriptQueryParams {
-  siteId: string;
-  sessionToken: string;
-}
 
 /**
- * Hook for managing script selection and application in the custom code interface
- * Provides functionality to select, fetch, and apply scripts to sites or pages
- *
- * @returns {Object} Object containing:
- *   - selectedScript: Currently selected script
- *   - registeredScripts: Array of available scripts
- *   - isLoading: Loading state for async operations
- *   - selectScript: Function to select a script
- *   - fetchScripts: Function to fetch available scripts
- *   - applyScript: Function to apply selected script to target
+ * Custom hook for script selection and application
+ * Manages the selected script state and provides methods
+ * to apply scripts to sites or pages
  */
 export function useScriptSelection() {
   const [selectedScript, setSelectedScript] = useState<CustomCode | null>(null);
-  const [queryParams, setQueryParams] = useState<ScriptQueryParams | null>(
-    null
-  );
+  const [registeredScripts, setRegisteredScripts] = useState<CustomCode[]>([]);
   const queryClient = useQueryClient();
 
   /**
-   * Updates the currently selected script
-   * @param script - The script to select
+   * Fetches the list of registered scripts
+   */
+  const fetchAllScripts = useCallback(
+    async (siteId: string, sessionToken: string) => {
+      try {
+        const scripts = await fetchScripts(sessionToken, siteId);
+        setRegisteredScripts(scripts);
+        return scripts;
+      } catch (error) {
+        console.error("Error fetching scripts:", error);
+        return [];
+      }
+    },
+    []
+  );
+
+  /**
+   * Selects a script for management
    */
   const selectScript = useCallback((script: CustomCode) => {
     setSelectedScript(script);
   }, []);
 
   /**
-   * Query for fetching available scripts
+   * Applies a script to a target (site or pages)
    */
-  const { data: registeredScripts = [], isLoading: isLoadingScripts } =
-    useQuery({
-      queryKey: ["scripts", queryParams?.siteId, queryParams?.sessionToken],
-      queryFn: async () => {
-        if (!queryParams) return [];
-        const response = await customCodeApi.getScripts(
-          queryParams.siteId,
-          queryParams.sessionToken
-        );
-        return response.registeredScripts || [];
-      },
-      enabled: Boolean(queryParams), // Only fetch when we have params
-    });
-
-  /**
-   * Mutation for applying scripts
-   */
-  const { mutateAsync: applyScript, isPending: isApplying } = useMutation({
-    mutationFn: async ({
+  const applyScript = useCallback(
+    async ({
       targetType,
       targetId,
       location,
@@ -68,79 +55,40 @@ export function useScriptSelection() {
       location: "header" | "footer";
       sessionToken: string;
     }) => {
-      if (!selectedScript?.id) return;
-
-      // For optimistic updates
-      const updateKey = getApplicationStatusKey(
-        selectedScript.id,
-        queryParams?.siteId,
-        Array.isArray(targetId) ? targetId : [targetId]
-      );
+      if (!selectedScript) return;
 
       try {
-        if (Array.isArray(targetId)) {
-          // Apply to each page with a small delay to avoid rate limits
-          for (const id of targetId) {
-            await customCodeApi.applyScript(
-              {
-                scriptId: selectedScript.id,
-                targetType: "page",
-                targetId: id,
-                location,
-                version: selectedScript.version,
-              },
-              sessionToken
-            );
-            // Small delay between requests
-            if (targetId.length > 1) {
-              await new Promise((resolve) => setTimeout(resolve, 100));
-            }
-          }
-        } else {
-          await customCodeApi.applyScript(
-            {
-              scriptId: selectedScript.id,
-              targetType,
-              targetId,
-              location,
-              version: selectedScript.version,
-            },
-            sessionToken
+        // Process single ID or array of IDs
+        const ids = Array.isArray(targetId) ? targetId : [targetId];
+
+        // Apply script to each target
+        for (const id of ids) {
+          await applyScriptToTarget(
+            sessionToken,
+            selectedScript.id,
+            targetType,
+            id,
+            location
           );
         }
 
-        // Wait a moment for the changes to propagate
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Force a fresh fetch of the application status
-        await queryClient.refetchQueries({
-          queryKey: updateKey,
-          exact: true,
-          type: "active",
+        // Invalidate the status query to trigger a refetch
+        queryClient.invalidateQueries({
+          queryKey: ["scriptApplicationStatus"],
         });
       } catch (error) {
         console.error("Error applying script:", error);
         throw error;
       }
     },
-  });
-
-  /**
-   * Wrapper function to fetch scripts with required parameters
-   */
-  const fetchScripts = useCallback(
-    async (siteId: string, sessionToken: string) => {
-      setQueryParams({ siteId, sessionToken });
-    },
-    []
+    [selectedScript, queryClient]
   );
 
   return {
     selectedScript,
     registeredScripts,
-    isLoading: isLoadingScripts || isApplying,
+    fetchScripts: fetchAllScripts,
     selectScript,
-    fetchScripts,
     applyScript,
   };
 }

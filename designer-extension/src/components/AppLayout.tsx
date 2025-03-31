@@ -5,6 +5,7 @@ import { DevTools } from "./DevTools";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "./theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { PanelLeft, Menu } from "lucide-react";
 
 interface AppLayoutProps {
@@ -36,58 +37,60 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <div className="flex h-full">
-          <AppSidebar
-            collapsed={isSidebarCollapsed}
-            mobileOpen={isMobileOpen}
-            onMobileToggle={toggleMobile}
-          />
+      <TooltipProvider>
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+          <div className="flex h-full">
+            <AppSidebar
+              collapsed={isSidebarCollapsed}
+              mobileOpen={isMobileOpen}
+              onMobileToggle={toggleMobile}
+            />
 
+            <div
+              className={cn(
+                "transition-all duration-300 flex-1",
+                isSidebarCollapsed ? "md:ml-10" : "md:ml-64"
+              )}
+            >
+              {/* Header with Breadcrumbs */}
+              <header className="sticky top-0 z-30 h-14 border-b border-border bg-background px-4 flex items-center ">
+                <button
+                  onClick={toggleSidebar}
+                  className="mr-3 hidden md:flex items-center justify-center h-6 w-6 rounded-sm hover:bg-background-tertiary"
+                  aria-label="Toggle sidebar"
+                >
+                  <PanelLeft className="text-foreground-secondary p-1" />
+                </button>
+
+                <button
+                  onClick={toggleMobile}
+                  className="mr-3 md:hidden flex items-center justify-center h-8 w-8 rounded-sm hover:bg-background-tertiary"
+                  aria-label="Toggle mobile menu"
+                >
+                  <Menu className="text-foreground-secondary" />
+                </button>
+
+                <div className="flex-1">
+                  <AppBreadcrumbs />
+                </div>
+              </header>
+
+              {/* Main Content */}
+              <main className="p-4 pb-24">{children}</main>
+            </div>
+          </div>
+
+          {/* Development Tools */}
           <div
             className={cn(
-              "transition-all duration-300 flex-1",
-              isSidebarCollapsed ? "md:ml-16" : "md:ml-64"
+              "fixed bottom-0 left-0 right-0 z-40",
+              isSidebarCollapsed ? "md:ml-10" : "md:ml-64"
             )}
           >
-            {/* Header with Breadcrumbs */}
-            <header className="sticky top-0 z-30 h-14 border-b border-border bg-background px-4 flex items-center ">
-              <button
-                onClick={toggleSidebar}
-                className="mr-3 hidden md:flex items-center justify-center h-6 w-6 rounded-sm hover:bg-background-tertiary"
-                aria-label="Toggle sidebar"
-              >
-                <PanelLeft className="text-foreground-secondary p-1" />
-              </button>
-
-              <button
-                onClick={toggleMobile}
-                className="mr-3 md:hidden flex items-center justify-center h-8 w-8 rounded-sm hover:bg-background-tertiary"
-                aria-label="Toggle mobile menu"
-              >
-                <Menu className="text-foreground-secondary" />
-              </button>
-
-              <div className="flex-1">
-                <AppBreadcrumbs />
-              </div>
-            </header>
-
-            {/* Main Content */}
-            <main className="p-4 pb-24">{children}</main>
+            <DevTools logout={logout} setHasClickedFetch={() => {}} />
           </div>
         </div>
-
-        {/* Development Tools */}
-        <div
-          className={cn(
-            "fixed bottom-0 left-0 right-0 z-40",
-            isSidebarCollapsed ? "md:ml-16" : "md:ml-64"
-          )}
-        >
-          <DevTools logout={logout} setHasClickedFetch={() => {}} />
-        </div>
-      </div>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

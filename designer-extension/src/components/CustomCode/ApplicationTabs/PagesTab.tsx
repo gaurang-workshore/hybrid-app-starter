@@ -1,23 +1,15 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Checkbox,
-  Paper,
-  TextField,
-  CircularProgress,
-} from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { green } from "@mui/material/colors";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { CustomCode } from "../../../types/types";
 import { useAuth } from "../../../hooks/useAuth";
 import { useApplicationStatus } from "../../../hooks/useCustomCode/useApplicationStatus";
 import { usePages } from "../../../hooks/usePages";
 import { useSites } from "../../../hooks/useSites";
+import { Code, CheckCircle, Loader2, Search, FileX } from "lucide-react";
 
 /**
  * Props for the PagesTab component
@@ -39,7 +31,6 @@ interface PagesTabProps {
  * - View and search through all pages in the site
  * - Select multiple pages at once
  * - Apply scripts to selected pages
- * - View real-time application status for each page
  */
 export function PagesTab({ selectedScript, onApplyCode }: PagesTabProps) {
   const { sessionToken } = useAuth();
@@ -47,30 +38,29 @@ export function PagesTab({ selectedScript, onApplyCode }: PagesTabProps) {
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
   // Search term for filtering pages
   const [searchTerm, setSearchTerm] = useState("");
+  // Local applying state
+  const [localIsApplying, setLocalIsApplying] = useState(false);
 
   // Get the current site using React Query
-  // This automatically handles caching and updates
   const { sites } = useSites(sessionToken, true);
   const currentSite = sites[0]; // Using first site in the list
 
   // Fetch pages data using React Query
-  // This automatically handles:
-  // - Caching of page data
-  // - Loading states
-  // - Automatic updates when site changes
   const { data: pages = [], isLoading: isPagesLoading } = usePages(
     currentSite?.id
   );
 
   // Fetch application status for all pages using React Query
-  // This tells us which pages have the script applied and where (header/footer)
-  const { applicationStatus, isLoading: isStatusLoading } =
-    useApplicationStatus(
-      sessionToken,
-      selectedScript?.id,
-      currentSite?.id,
-      pages.map((p) => p.id)
-    );
+  const {
+    applicationStatus,
+    isLoading: isStatusLoading,
+    setApplying,
+  } = useApplicationStatus(
+    sessionToken,
+    selectedScript?.id,
+    currentSite?.id,
+    pages.map((p) => p.id)
+  );
 
   // Filter pages based on search term
   const filteredPages = pages.filter((page) =>
@@ -79,8 +69,6 @@ export function PagesTab({ selectedScript, onApplyCode }: PagesTabProps) {
 
   /**
    * Handles selecting/deselecting all visible pages
-   * If all pages are currently selected, deselects them all
-   * If some or no pages are selected, selects all filtered pages
    */
   const handleSelectAll = () => {
     if (selectedPages.length === filteredPages.length) {
@@ -92,7 +80,6 @@ export function PagesTab({ selectedScript, onApplyCode }: PagesTabProps) {
 
   /**
    * Handles toggling selection of a single page
-   * Adds or removes the page ID from the selectedPages array
    */
   const handleTogglePage = (pageId: string) => {
     setSelectedPages((prev) =>
@@ -104,145 +91,154 @@ export function PagesTab({ selectedScript, onApplyCode }: PagesTabProps) {
 
   /**
    * Handles applying the script to all selected pages
-   * The mutation in useScriptSelection will automatically:
-   * - Apply the script to each page
-   * - Invalidate the status cache
-   * - Trigger a refetch of the status
    */
   const handleApplyCode = async (location: "header" | "footer") => {
     if (!selectedScript || selectedPages.length === 0) return;
+
+    setLocalIsApplying(true);
+    setApplying(true);
 
     try {
       await onApplyCode("page", selectedPages, location);
       // Status will automatically update via React Query's cache invalidation
     } catch (error) {
       console.error("Error applying code to pages:", error);
+    } finally {
+      setLocalIsApplying(false);
+      setApplying(false);
     }
   };
 
   // Show loading state while fetching pages or status
   if (isPagesLoading || isStatusLoading) {
     return (
-      <Box sx={{ p: 2, textAlign: "center" }}>
-        <CircularProgress size={20} sx={{ mr: 1 }} />
-        <Typography variant="body2" color="text.secondary">
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className="h-5 w-5 animate-spin text-foreground-secondary" />
+        <span className="ml-2 text-sm text-foreground-secondary">
           Loading pages...
-        </Typography>
-      </Box>
+        </span>
+      </div>
+    );
+  }
+
+  if (pages.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-32 text-center gap-2">
+        <FileX className="h-8 w-8 text-foreground-secondary opacity-50" />
+        <span className="text-sm text-foreground-secondary">
+          No pages found in this site
+        </span>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Apply to Pages
-      </Typography>
-
-      {/* 
-        Search and Bulk Selection Section
-        --------------------------------
-        Provides:
-        1. Search input to filter pages by name
-        2. Select All button that:
-           - Shows "Select All" when no or some pages are selected
-           - Shows "Deselect All" when all filtered pages are selected
-           - Only affects currently filtered pages
-      */}
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search pages..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 1 }}
-        />
-        <Button size="small" onClick={handleSelectAll} sx={{ mb: 2 }}>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-secondary" />
+          <Input
+            placeholder="Search pages..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSelectAll}
+          className="whitespace-nowrap"
+        >
           {selectedPages.length === filteredPages.length
             ? "Deselect All"
             : "Select All"}
         </Button>
-      </Box>
+      </div>
 
-      {/* 
-        Pages List Section
-        -----------------
-        Scrollable list of pages showing:
-        1. Checkbox for selection
-        2. Page name and URL
-        3. Application status (if script is applied)
-           - Green checkmark
-           - "Applied" text
-        
-        The list:
-        - Only shows pages matching the search term
-        - Updates selection state immediately
-        - Shows real-time application status
-        - Handles large numbers of pages with virtualization
-      */}
-      <Paper
-        variant="outlined"
-        sx={{ mb: 2, maxHeight: 400, overflow: "auto" }}
-      >
-        <List dense>
-          {filteredPages.map((page) => (
-            <ListItem
-              key={page.id}
-              secondaryAction={
-                selectedScript &&
-                applicationStatus[page.id]?.isApplied && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <CheckCircleIcon sx={{ color: green[500], fontSize: 16 }} />
-                    <Typography variant="caption" color="text.secondary">
-                      Applied
-                    </Typography>
-                  </Box>
-                )
-              }
-            >
-              <Checkbox
-                edge="start"
-                checked={selectedPages.includes(page.id)}
-                onChange={() => handleTogglePage(page.id)}
-              />
-              <ListItemText
-                primary={page.name}
-                secondary={page.url}
-                sx={{ mr: 2 }}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
+      <div className="border border-border rounded-md overflow-hidden">
+        <ScrollArea className="h-[250px]">
+          <div className="divide-y divide-border">
+            {filteredPages.map((page) => (
+              <div
+                key={page.id}
+                className="flex items-center py-2 px-3 hover:bg-background-tertiary"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Checkbox
+                    id={`page-${page.id}`}
+                    checked={selectedPages.includes(page.id)}
+                    onCheckedChange={() => handleTogglePage(page.id)}
+                  />
+                  <label
+                    htmlFor={`page-${page.id}`}
+                    className="flex-1 cursor-pointer min-w-0"
+                  >
+                    <div className="font-medium text-sm truncate">
+                      {page.name}
+                    </div>
+                    <div className="text-xs text-foreground-secondary truncate">
+                      {page.url}
+                    </div>
+                  </label>
+                </div>
 
-      {/* 
-        Action Buttons Section
-        ---------------------
-        Buttons to apply the script to all selected pages:
-        1. Apply to Header - adds script to <head> of each page
-        2. Apply to Footer - adds script to end of <body> of each page
-        
-        Buttons are:
-        - Disabled when no script is selected or no pages are selected
-        - Apply to all selected pages in a single operation
-        - Automatically update status when complete
-      */}
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <Button
-          variant="contained"
-          onClick={() => handleApplyCode("header")}
-          disabled={!selectedScript || selectedPages.length === 0}
-        >
-          Apply to Header
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => handleApplyCode("footer")}
-          disabled={!selectedScript || selectedPages.length === 0}
-        >
-          Apply to Footer
-        </Button>
-      </Box>
-    </Box>
+                {selectedScript && applicationStatus[page.id]?.isApplied && (
+                  <div className="flex items-center gap-1 ml-4">
+                    <CheckCircle className="h-3.5 w-3.5 text-green-icon" />
+                    <Badge variant="outline" className="text-xs">
+                      {applicationStatus[page.id].location === "header"
+                        ? "Header"
+                        : "Footer"}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-sm text-foreground-secondary">
+          {selectedPages.length} page{selectedPages.length !== 1 ? "s" : ""}{" "}
+          selected
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => handleApplyCode("header")}
+            disabled={
+              selectedPages.length === 0 || !selectedScript || localIsApplying
+            }
+          >
+            {localIsApplying ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Code className="h-3.5 w-3.5" />
+            )}
+            Apply to Header
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => handleApplyCode("footer")}
+            disabled={
+              selectedPages.length === 0 || !selectedScript || localIsApplying
+            }
+          >
+            {localIsApplying ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Code className="h-3.5 w-3.5" />
+            )}
+            Apply to Footer
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

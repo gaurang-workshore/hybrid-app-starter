@@ -1,16 +1,25 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Code2, FileCode, PlusCircle } from "lucide-react";
-import { ScriptRegistration, ScriptsList, SiteTab, PagesTab } from "./";
-import { useAuth } from "../../hooks/useAuth";
-import { CustomCode } from "../../types/types";
-import { useSites } from "../../hooks/useSites";
 import {
   useScriptRegistration,
   useScriptSelection,
 } from "../../hooks/useCustomCode";
+import { ScriptRegistration, ScriptsList, SiteTab, PagesTab } from "./";
+import { useAuth } from "../../hooks/useAuth";
+import { useSites } from "../../hooks/useSites";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FileCode } from "lucide-react";
 
+/**
+ * CustomCodeDashboard is the main component for managing custom code scripts in a Webflow site.
+ * It provides functionality to:
+ * - Register new scripts (hosted or inline)
+ * - View and select from existing scripts
+ * - Apply scripts to either the entire site or specific pages
+ * - Manage script locations (header/footer)
+ */
 export function CustomCodeDashboard() {
   const { sessionToken } = useAuth();
   const {
@@ -19,11 +28,9 @@ export function CustomCodeDashboard() {
     isLoading: isSitesLoading,
   } = useSites(sessionToken, true);
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"register" | "manage">("register");
-  const [applicationTab, setApplicationTab] = useState<"site" | "pages">(
-    "site"
-  );
+  // Navigation state
+  const [mainTab, setMainTab] = useState<"register" | "manage">("register");
+  const [applicationTab, setApplicationTab] = useState("site");
 
   // Hook integrations for script management
   const {
@@ -41,19 +48,28 @@ export function CustomCodeDashboard() {
 
   // Fetch scripts when switching to manage tab or when site/session changes
   useEffect(() => {
-    if (activeTab === "manage" && currentSite?.id && sessionToken) {
+    if (mainTab === "manage" && currentSite?.id && sessionToken) {
       fetchScripts(currentSite.id, sessionToken);
     }
-  }, [activeTab, currentSite?.id, sessionToken, fetchScripts]);
+  }, [mainTab, currentSite?.id, sessionToken, fetchScripts]);
 
   // Show loading state while sites are being fetched
   if (isCurrentSiteLoading || isSitesLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin text-primary" />
-        <span className="ml-2 text-foreground-secondary">
-          Loading site information...
-        </span>
+      <div className="space-y-4 w-full">
+        <div className="flex items-center gap-3 mb-4">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-6 w-48" />
+        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <Skeleton className="h-5 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -61,30 +77,40 @@ export function CustomCodeDashboard() {
   // Show message if no current site is available
   if (!currentSite) {
     return (
-      <Card>
-        <CardContent className="py-6">
-          <div className="text-center text-foreground-secondary">
-            Unable to load site information. Please make sure you're in a
-            Webflow Designer session.
-          </div>
-        </CardContent>
-      </Card>
+      <Alert variant="destructive" className="w-full">
+        <AlertDescription>
+          Unable to load site information. Please make sure you're in a Webflow
+          Designer session.
+        </AlertDescription>
+      </Alert>
     );
   }
 
+  /**
+   * Handles the registration of new custom code
+   */
   const handleRegisterCode = async (code: string, isHosted: boolean) => {
     try {
       await registerScript(code, isHosted);
       await fetchScripts(currentSite?.id || "", sessionToken || "");
+
+      // Switch to manage tab after successful registration
+      setMainTab("manage");
     } catch (error) {
       console.error("Error registering code:", error);
     }
   };
 
-  const handleScriptSelect = (script: CustomCode) => {
+  /**
+   * Updates the currently selected script
+   */
+  const handleScriptSelect = (script: any) => {
     selectScript(script);
   };
 
+  /**
+   * Wrapper for applying scripts to site
+   */
   const handleApplyToSite = (
     targetType: "site",
     targetId: string,
@@ -99,6 +125,9 @@ export function CustomCodeDashboard() {
     });
   };
 
+  /**
+   * Wrapper for applying scripts to pages
+   */
   const handleApplyToPages = (
     targetType: "page",
     pageIds: string[],
@@ -113,76 +142,65 @@ export function CustomCodeDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-md bg-background-tertiary">
-            <FileCode className="text-primary" />
-          </div>
-          <h1 className="text-xl font-medium">Custom Code Manager</h1>
+    <div className="space-y-4 w-full">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-1 rounded-md bg-background-tertiary">
+          <FileCode className="text-primary h-5 w-5" />
         </div>
+        <h3 className="text-lg font-medium">Custom Code Manager</h3>
       </div>
 
       <Tabs
-        value={activeTab}
-        onValueChange={(value: string) =>
-          setActiveTab(value as "register" | "manage")
-        }
+        defaultValue={mainTab}
+        onValueChange={(value) => setMainTab(value as "register" | "manage")}
         className="w-full"
       >
-        <TabsList className="mb-6 w-full bg-background-secondary p-1">
-          <TabsTrigger
-            value="register"
-            className="flex items-center gap-2 px-4 py-2"
-          >
-            <PlusCircle />
+        <TabsList className="mb-4 bg-background-secondary border border-border">
+          <TabsTrigger value="register" className="flex items-center gap-2">
+            <FileCode className="size-4" />
             Register Script
           </TabsTrigger>
-          <TabsTrigger
-            value="manage"
-            className="flex items-center gap-2 px-4 py-2"
-          >
-            <Code2 />
+          <TabsTrigger value="manage" className="flex items-center gap-2">
+            <FileCode className="size-4" />
             Manage Scripts
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="register" className="mt-0">
+        <TabsContent value="register" className="pt-2">
           <ScriptRegistration
             onRegister={handleRegisterCode}
             isRegistering={isRegistering}
           />
         </TabsContent>
 
-        <TabsContent value="manage" className="mt-0">
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <ScriptsList
-                scripts={registeredScripts}
-                selectedScript={selectedScript}
-                onScriptSelect={handleScriptSelect}
-              />
-            </CardContent>
-          </Card>
+        <TabsContent value="manage" className="space-y-4 pt-2">
+          <ScriptsList
+            scripts={registeredScripts}
+            selectedScript={selectedScript}
+            onScriptSelect={handleScriptSelect}
+          />
 
-          {registeredScripts.length > 0 && (
+          {registeredScripts.length > 0 && selectedScript && (
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Script Application</CardTitle>
+              <CardHeader className="pb-2 border-b border-border">
+                <CardTitle className="text-sm">Apply Script</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Tabs
-                  value={applicationTab}
-                  onValueChange={(value: string) =>
-                    setApplicationTab(value as "site" | "pages")
-                  }
+                  defaultValue={applicationTab}
+                  onValueChange={setApplicationTab}
+                  className="w-full"
                 >
-                  <TabsList className="mb-4 px-6 pt-6">
-                    <TabsTrigger value="site">Apply to Site</TabsTrigger>
-                    <TabsTrigger value="pages">Apply to Pages</TabsTrigger>
+                  <TabsList className="w-full bg-background-secondary border-b border-border rounded-none">
+                    <TabsTrigger value="site" className="flex-1">
+                      Apply to Site
+                    </TabsTrigger>
+                    <TabsTrigger value="pages" className="flex-1">
+                      Apply to Pages
+                    </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="site" className="mt-0 px-6 pb-6">
+                  <TabsContent value="site" className="p-4">
                     <SiteTab
                       currentSite={currentSite}
                       selectedScript={selectedScript}
@@ -190,7 +208,7 @@ export function CustomCodeDashboard() {
                     />
                   </TabsContent>
 
-                  <TabsContent value="pages" className="mt-0 px-6 pb-6">
+                  <TabsContent value="pages" className="p-4">
                     <PagesTab
                       selectedScript={selectedScript}
                       onApplyCode={handleApplyToPages}

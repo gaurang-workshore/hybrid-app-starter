@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { customCodeApi } from "../../services/customCode";
 import { ApplicationStatus, ScriptStatus } from "../../types/types";
@@ -7,8 +8,8 @@ const MAX_PAGES_PER_REQUEST = 10;
 
 // Helper to generate a consistent query key
 export const getApplicationStatusKey = (
-  scriptId?: string,
-  siteId?: string,
+  scriptId?: string | null,
+  siteId?: string | null,
   pageIds: string[] = []
 ) => {
   const stablePageKey = pageIds.slice().sort().join(",");
@@ -17,21 +18,19 @@ export const getApplicationStatusKey = (
 
 /**
  * Hook for managing and tracking the application status of scripts
- * Provides functionality to check where scripts are applied across a site and its pages
- *
  * @param sessionToken - The user's authentication token
  * @param scriptId - The ID of the script to track
  * @param siteId - The Webflow site ID to check
  * @param pageIds - Optional array of page IDs to check status for
- * @returns {Object} Object containing application status data and utility functions
  */
 export function useApplicationStatus(
-  sessionToken: string,
-  scriptId?: string,
-  siteId?: string,
+  sessionToken?: string | null,
+  scriptId?: string | null,
+  siteId?: string | null,
   pageIds: string[] = []
 ) {
   const queryClient = useQueryClient();
+  const [isApplying, setIsApplying] = useState(false);
   const queryKey = getApplicationStatusKey(scriptId, siteId, pageIds);
 
   const {
@@ -42,7 +41,7 @@ export function useApplicationStatus(
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!scriptId || !siteId) {
+      if (!sessionToken || !scriptId || !siteId) {
         return {};
       }
 
@@ -53,7 +52,7 @@ export function useApplicationStatus(
       // Find which pages we need to fetch (don't have cached data for)
       const pagesToFetch = pageIds.filter((pageId) => !existingData[pageId]);
 
-      if (pagesToFetch.length === 0) {
+      if (pagesToFetch.length === 0 && Object.keys(existingData).length > 0) {
         return existingData;
       }
 
@@ -66,41 +65,61 @@ export function useApplicationStatus(
       const newStatus: ApplicationStatus = { ...existingData };
 
       // Process each chunk sequentially to avoid rate limits
-      for (const chunk of chunks) {
-        const status = await customCodeApi.getBatchStatus(
-          siteId,
-          chunk,
-          sessionToken
-        );
+      try {
+        // First get site status if needed
+        if (!newStatus[siteId]) {
+          const siteStatus = await customCodeApi.getBatchStatus(
+            siteId,
+            [],
+            sessionToken
+          );
 
-        // Process and format the status response
-        Object.entries(status as Record<string, ScriptStatus>).forEach(
-          ([pageId, scripts]) => {
-            newStatus[pageId] = {
-              isApplied: Boolean(scripts[scriptId]),
-              location: scripts[scriptId]?.location,
-            };
-          }
-        );
-
-        // If there are more chunks, add a small delay
-        if (chunks.length > 1) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          // Process and format the status response for site
+          Object.entries(siteStatus as Record<string, ScriptStatus>).forEach(
+            ([id, scripts]) => {
+              if (id === siteId) {
+                newStatus[id] = {
+                  isApplied: Boolean(scripts[scriptId]),
+                  location: scripts[scriptId]?.location,
+                };
+              }
+            }
+          );
         }
-      }
 
-      return newStatus;
+        // Then process each page chunk
+        for (const chunk of chunks) {
+          const status = await customCodeApi.getBatchStatus(
+            siteId,
+            chunk,
+            sessionToken
+          );
+
+          // Process and format the status response for pages
+          Object.entries(status as Record<string, ScriptStatus>).forEach(
+            ([pageId, scripts]) => {
+              newStatus[pageId] = {
+                isApplied: Boolean(scripts[scriptId]),
+                location: scripts[scriptId]?.location,
+              };
+            }
+          );
+
+          // If there are more chunks, add a small delay
+          if (chunks.length > 1) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+
+        return newStatus;
+      } catch (error) {
+        console.error("Error fetching application status:", error);
+        return newStatus;
+      }
     },
     enabled: Boolean(sessionToken && scriptId && siteId),
     staleTime: 60 * 1000, // Consider data fresh for 1 minute
     gcTime: 5 * 60 * 1000, // Keep unused data in cache for 5 minutes
-    placeholderData: (previousData) => {
-      if (previousData) return previousData;
-      return pageIds.reduce((acc, pageId) => {
-        acc[pageId] = { isApplied: false };
-        return acc;
-      }, {} as ApplicationStatus);
-    },
   });
 
   return {
@@ -108,5 +127,7 @@ export function useApplicationStatus(
     isLoading,
     error,
     fetchStatus,
+    isApplying,
+    setApplying: setIsApplying,
   };
 }

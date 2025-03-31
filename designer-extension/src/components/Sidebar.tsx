@@ -9,6 +9,12 @@ import {
   SidebarNav,
   SidebarNavItem,
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -101,16 +107,41 @@ export function AppSidebar({
             </div>
           </div>
           <SidebarNav collapsed={collapsed}>
-            {menuItems.map((item) => (
-              <SidebarNavItem
-                key={item.path}
-                icon={item.icon}
-                label={item.text}
-                variant={location.pathname === item.path ? "active" : "default"}
-                collapsed={collapsed}
-                onClick={() => handleNavigation(item.path)}
-              />
-            ))}
+            <TooltipProvider delayDuration={300}>
+              {menuItems.map((item) =>
+                collapsed ? (
+                  <Tooltip key={item.path}>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <SidebarNavItem
+                          icon={item.icon}
+                          label={item.text}
+                          variant={
+                            location.pathname === item.path
+                              ? "active"
+                              : "default"
+                          }
+                          collapsed={collapsed}
+                          onClick={() => handleNavigation(item.path)}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{item.text}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <SidebarNavItem
+                    key={item.path}
+                    icon={item.icon}
+                    label={item.text}
+                    variant={
+                      location.pathname === item.path ? "active" : "default"
+                    }
+                    collapsed={collapsed}
+                    onClick={() => handleNavigation(item.path)}
+                  />
+                )
+              )}
+            </TooltipProvider>
           </SidebarNav>
         </SidebarContent>
       </Sidebar>
