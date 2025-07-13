@@ -1,29 +1,29 @@
 import { useState } from "react";
-import { Box, Tabs, Tab } from "@mui/material";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { ElementMapping } from "../../types/element-mapping";
 
+/**
+ * Props for the ElementTreeViewer component
+ * @property {ElementMapping} tree - The element tree data to display
+ * @property {number} depth - Optional depth level for rendering nested structures
+ */
 interface ElementTreeViewerProps {
   tree: ElementMapping;
-  depth?: number;
 }
 
+/**
+ * Props for the internal TabPanel component
+ */
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
-    </div>
-  );
-}
-
+/**
+ * Structure of formatted element data for display
+ */
 interface FormattedElement {
   name: string;
   id: string;
@@ -33,6 +33,21 @@ interface FormattedElement {
   children: FormattedElement[];
 }
 
+/**
+ * TabPanel - Internal component to handle tab content display
+ */
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div role="tabpanel" hidden={value !== index} className="pt-4" {...other}>
+      {value === index && children}
+    </div>
+  );
+}
+
+/**
+ * Formats the element data for more readable display
+ */
 const formatElementData = (element: ElementMapping): FormattedElement => {
   const styleName = element.styles?.[0]?.name;
   const displayName = styleName || `${element.type} (No Style)`;
@@ -50,26 +65,61 @@ const formatElementData = (element: ElementMapping): FormattedElement => {
   };
 };
 
-export function ElementTreeViewer({ tree, depth = 0 }: ElementTreeViewerProps) {
+/**
+ * ElementTreeViewer displays the structured element data in a tabbed interface
+ */
+export function ElementTreeViewer({ tree }: ElementTreeViewerProps) {
   const [selectedTab, setSelectedTab] = useState(0);
-  console.log(tree);
+
+  // Safely format the tree data
+  let formattedData;
+  let styleData;
+
+  try {
+    formattedData = JSON.stringify(formatElementData(tree), null, 2);
+    styleData = JSON.stringify(tree.styles || [], null, 2);
+  } catch (error) {
+    console.error("Error formatting element data:", error);
+    formattedData = JSON.stringify({ error: "Error formatting data" }, null, 2);
+    styleData = JSON.stringify({ error: "Error formatting styles" }, null, 2);
+  }
+
   return (
-    <Box>
-      <Tabs
-        value={selectedTab}
-        onChange={(_, newValue) => setSelectedTab(newValue)}
-      >
-        <Tab label="Element Tree" />
-        <Tab label="Raw Styles" />
-      </Tabs>
+    <div className="bg-background-secondary rounded-md overflow-hidden">
+      <div className="border-b border-border">
+        <nav className="flex" aria-label="Tabs">
+          <button
+            onClick={() => setSelectedTab(0)}
+            className={`px-4 py-2 text-sm font-medium ${
+              selectedTab === 0
+                ? "border-b-2 border-blue text-foreground"
+                : "text-foreground-secondary hover:text-foreground hover:bg-background-tertiary"
+            }`}
+            aria-current={selectedTab === 0 ? "page" : undefined}
+          >
+            Element Tree
+          </button>
+          <button
+            onClick={() => setSelectedTab(1)}
+            className={`px-4 py-2 text-sm font-medium ${
+              selectedTab === 1
+                ? "border-b-2 border-blue text-foreground"
+                : "text-foreground-secondary hover:text-foreground hover:bg-background-tertiary"
+            }`}
+            aria-current={selectedTab === 1 ? "page" : undefined}
+          >
+            Raw Styles
+          </button>
+        </nav>
+      </div>
 
       <TabPanel value={selectedTab} index={0}>
         <SyntaxHighlighter
           language="json"
           style={vscDarkPlus}
-          customStyle={{ margin: 0, borderRadius: "4px" }}
+          customStyle={{ margin: 0, borderRadius: "4px", fontSize: "12px" }}
         >
-          {JSON.stringify(formatElementData(tree), null, 2)}
+          {formattedData}
         </SyntaxHighlighter>
       </TabPanel>
 
@@ -77,11 +127,11 @@ export function ElementTreeViewer({ tree, depth = 0 }: ElementTreeViewerProps) {
         <SyntaxHighlighter
           language="json"
           style={vscDarkPlus}
-          customStyle={{ margin: 0, borderRadius: "4px" }}
+          customStyle={{ margin: 0, borderRadius: "4px", fontSize: "12px" }}
         >
-          {JSON.stringify(tree.styles, null, 2)}
+          {styleData}
         </SyntaxHighlighter>
       </TabPanel>
-    </Box>
+    </div>
   );
 }

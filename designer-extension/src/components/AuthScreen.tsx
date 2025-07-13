@@ -1,60 +1,56 @@
-import { Container, Typography, Button } from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "../hooks/useAuth";
+import { LogIn } from "lucide-react";
 
-/**
- * AuthScreen Component
- *
- * Displays the initial authentication screen with a button to start the OAuth flow.
- * If a user clicks the button, this component will open a popup window and monitor its state.
- * Once the popup is closed, it will trigger the onAuth callback in the parent component.
- *
- * @param onAuth - Callback function that runs after successful authentication.
- *                 This allows the parent component to respond to the auth completion
- *                 (e.g., refreshing the app state, navigating to a new page).
- *
- * Usage example:
- * <AuthScreen onAuth={() => console.log('User authenticated!')} />
- */
 export function AuthScreen({ onAuth }: { onAuth: () => void }) {
   const base_url = import.meta.env.VITE_NEXTJS_API_URL;
-
-  // Initialize the auth hook which provides methods for authentication
   const { user } = useAuth();
 
-  // Function to open the authorization popup authorization window
   const openAuthScreen = () => {
-    console.log("Opening auth window..."); // Debug
+    console.log("Opening auth window...");
     const authWindow = window.open(
       `${base_url}/api/auth/authorize?state=webflow_designer`,
       "_blank",
       "width=600,height=600"
     );
 
-    // Check if the authorization window is closed
     const checkWindow = setInterval(() => {
       if (authWindow?.closed) {
-        console.log("Auth window closed"); // Debug
+        console.log("Auth window closed");
         clearInterval(checkWindow);
-        // The token exchange will be handled by the message event listener in App.tsx
         onAuth();
       }
     }, 1000);
   };
 
   return (
-    <Container sx={{ padding: "20px" }}>
-      <Typography variant="h1">
-        {user.firstName
-          ? `Welcome back ${user.firstName} 👋🏾`
-          : "Hello Stranger 👋🏾"}
-      </Typography>
-      <Button
-        variant="contained"
-        sx={{ margin: "10px 20px" }}
-        onClick={openAuthScreen}
-      >
-        Authorize App
-      </Button>
-    </Container>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center mb-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-primary">
+            <LogIn className="h-5 w-5 text-white" />
+          </div>
+        </div>
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-base">
+              {user?.firstName
+                ? `Welcome back ${user.firstName} 👋`
+                : "Hello Stranger 👋"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="mb-4 text-sm text-foreground-secondary">
+              Please authorize this app to access your Webflow sites
+            </p>
+            <Button variant="default" size="sm" onClick={openAuthScreen}>
+              Authorize App
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

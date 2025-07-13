@@ -1,7 +1,9 @@
-import { Container, Typography, Button } from "@mui/material";
-import { LoadingStates } from "./LoadingStates.tsx";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DataTable from "./DataTable";
-import { Site } from "../types/types.ts";
+import { LoadingStates } from "./LoadingStates";
+import { Site } from "../types/types";
+import { LayoutGrid, RefreshCw } from "lucide-react";
 
 interface DashboardProps {
   user: { firstName: string };
@@ -12,23 +14,6 @@ interface DashboardProps {
   onFetchSites: () => void;
 }
 
-/**
- * Dashboard Component
- *
- * The main interface after user authentication. This component:
- * 1. Welcomes the user with their first name
- * 2. Provides controls to fetch and display authorized Webflow sites
- * 3. Handles loading and error states during data fetching
- * 4. Displays site data in a table format when available
- *
- * @param user - Contains user information (e.g., firstName)
- * @param sites - Array of Webflow sites the user has access to
- * @param isLoading - Indicates if sites are being fetched
- * @param isError - Indicates if an error occurred during fetch
- * @param error - Error message to display if fetch failed
- * @param onFetchSites - Callback to trigger site data fetching
- *
- */
 export function Dashboard({
   user,
   sites,
@@ -38,25 +23,52 @@ export function Dashboard({
   onFetchSites,
 }: DashboardProps) {
   return (
-    <Container>
-      <Typography variant="h1">Hello {user.firstName} 👋🏾</Typography>
-      <Button
-        variant="contained"
-        sx={{ margin: "10px 20px" }}
-        onClick={onFetchSites} // Fetch sites when the button is clicked
-        disabled={isLoading} // Disable the button while loading
-      >
-        {isLoading ? "Loading Sites..." : "List Authorized Sites"}{" "}
-        {/* Button text */}
-      </Button>
+    <div className="space-y-2">
+      <div className="flex items-center mb-1">
+        <div className="flex items-center gap-3">
+          <div className="p-1 rounded-md bg-background-tertiary">
+            <LayoutGrid className="text-primary h-5 w-5" />
+          </div>
+          <h3 className="text-l font-medium">Dashboard</h3>
+        </div>
+      </div>
 
-      {/* Display loading and error states */}
-      <LoadingStates isLoading={isLoading} isError={isError} error={error} />
+      <Card>
+        <CardHeader className="pb-1">
+          <CardTitle className="text-base">Hello {user.firstName} 👋</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-foreground-secondary mb-2">
+            View your authorized Webflow sites and access various tools to
+            enhance your Webflow experience.
+          </p>
 
-      {/* Display the sites data in a table format */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onFetchSites}
+            disabled={isLoading}
+            className="gap-2 items-center"
+          >
+            <RefreshCw
+              className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`}
+            />
+            {isLoading ? "Loading Sites..." : "List Authorized Sites"}
+          </Button>
+
+          <div className="mt-4">
+            <LoadingStates
+              isLoading={isLoading}
+              isError={isError}
+              error={error}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {!isLoading && !isError && sites && sites.length > 0 && (
         <DataTable data={sites} />
       )}
-    </Container>
+    </div>
   );
 }

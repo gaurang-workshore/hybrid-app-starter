@@ -1,11 +1,7 @@
 import { CustomCode } from "../../types/types";
-import {
-  List,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, FileCode } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * Props interface for the ScriptsList component
@@ -25,49 +21,65 @@ interface ScriptsListProps {
  * - View all registered scripts
  * - Select a script for management
  * - See script details (name, version)
- *
- * The list highlights the currently selected script and shows relevant metadata
- * for each script entry.
- *
- * @example
- * ```tsx
- * <ScriptsList
- *   scripts={registeredScripts}
- *   selectedScript={currentScript}
- *   onScriptSelect={handleScriptSelect}
- * />
- * ```
  */
 export function ScriptsList({
   scripts,
   selectedScript,
   onScriptSelect,
 }: ScriptsListProps) {
+  if (scripts.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Registered Scripts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-foreground-secondary py-4 px-2 text-center">
+            No scripts registered yet. Create a new script with the Register
+            Script tab.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Paper elevation={0} sx={{ p: 2, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Registered Scripts
-      </Typography>
-      <List>
+    <Card>
+      <CardHeader className="pb-2 border-b border-border">
+        <CardTitle className="text-base flex items-center gap-2">
+          <FileCode className="h-4 w-4 text-primary" />
+          Registered Scripts
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 divide-y divide-border">
         {scripts?.map((script) => (
-          <ListItemButton
+          <div
             key={script.id}
-            selected={selectedScript?.id === script.id}
+            className={cn(
+              "flex flex-col p-3 cursor-pointer transition-colors",
+              selectedScript?.id === script.id
+                ? "bg-background-tertiary"
+                : "hover:bg-background-secondary"
+            )}
             onClick={() => onScriptSelect(script)}
-            sx={{
-              borderRadius: 1,
-              mb: 1,
-            }}
           >
-            <ListItemText
-              primary={script.displayName || "Unnamed Script"}
-              secondary={`Version: ${script.version} • Created: ${new Date(
-                script.createdOn || ""
-              ).toLocaleString()}`}
-            />
-          </ListItemButton>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-sm">
+                {script.displayName || "Unnamed Script"}
+              </span>
+              <span className="text-xs text-foreground-secondary bg-background-tertiary px-2 py-0.5 rounded">
+                v{script.version}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 mt-1 text-xs text-foreground-secondary">
+              <Calendar className="h-3 w-3" />
+              <span>
+                Created: {new Date(script.createdOn || "").toLocaleDateString()}
+              </span>
+            </div>
+          </div>
         ))}
-      </List>
-    </Paper>
+      </CardContent>
+    </Card>
   );
 }

@@ -28,11 +28,20 @@ export function useScriptRegistration(sessionToken: string, siteId: string) {
 
     setIsRegistering(true);
     try {
-      const scriptData: CustomCode = {
-        displayName: `Boilerplate Script ${Date.now()}`,
+      // Use a basic alphanumeric name with a timestamp to ensure uniqueness
+      const scriptName = `Script${Math.floor(Math.random() * 1000000)}`;
+
+      const scriptData: any = {
+        displayName: scriptName,
         version: "1.0.0",
-        ...(isHosted ? { hostedLocation: code } : { sourceCode: code }),
       };
+
+      // Add the appropriate property based on whether it's hosted or inline
+      if (isHosted) {
+        scriptData.hostedLocation = code;
+      } else {
+        scriptData.sourceCode = code;
+      }
 
       const request: ScriptRegistrationRequest = {
         siteId,
@@ -40,11 +49,9 @@ export function useScriptRegistration(sessionToken: string, siteId: string) {
         scriptData,
       };
 
-      const { result } = await customCodeApi.registerScript(
-        request,
-        sessionToken
-      );
-      return result;
+      const result = await customCodeApi.registerScript(request, sessionToken);
+
+      return result?.result;
     } catch (error) {
       console.error("Error registering script:", error);
       throw error;

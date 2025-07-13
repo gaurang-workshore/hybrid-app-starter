@@ -108,14 +108,20 @@ export interface ScriptRegistrationRequest {
  * @property {string} createdOn - The date and time when the script was created
  * @property {string} lastUpdated - The date and time when the script was last updated
  */
+// export interface CustomCode {
+//   id?: string;
+//   displayName: string;
+//   hostedLocation?: string;
+//   sourceCode?: string;
+//   version: string;
+//   createdOn?: string;
+//   lastUpdated?: string;
+// }
 export interface CustomCode {
-  id?: string;
+  id: string;
   displayName: string;
-  hostedLocation?: string;
-  sourceCode?: string;
   version: string;
-  createdOn?: string;
-  lastUpdated?: string;
+  createdOn: string;
 }
 
 /**
@@ -126,13 +132,20 @@ export interface CustomCode {
  * @property {string} appliedAt - The date and time when the script was applied
  * @property {string} version - The version of the script
  */
+// export interface CodeApplication {
+//   scriptId: string;
+//   targetType: ScriptTargetType;
+//   targetId: string;
+//   appliedAt?: string;
+//   version: string;
+//   location: ScriptLocation;
+// }
 export interface CodeApplication {
   scriptId: string;
-  targetType: ScriptTargetType;
+  targetType: "site" | "page";
   targetId: string;
-  appliedAt?: string;
-  version: string;
-  location: ScriptLocation;
+  location: "header" | "footer";
+  version?: string; // Made optional
 }
 
 /**

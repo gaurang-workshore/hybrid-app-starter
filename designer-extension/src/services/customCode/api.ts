@@ -120,3 +120,47 @@ export const customCodeApi = {
     }
   },
 };
+
+// Export wrappers for compatibility with existing code
+export const getScriptApplicationStatus = async (
+  sessionToken: string,
+  _scriptId: string, // Prefix with underscore to indicate unused
+  targetIds: string[]
+): Promise<
+  Record<string, { isApplied: boolean; location?: "header" | "footer" }>
+> => {
+  if (targetIds.length === 0) return {};
+
+  // Assume first ID is site ID if only one target, otherwise pass all targets as page IDs
+  if (targetIds.length === 1) {
+    return customCodeApi.getBatchStatus(targetIds[0], [], sessionToken);
+  } else {
+    // First ID is assumed to be site ID, rest are page IDs
+    const [siteId, ...pageIds] = targetIds;
+    return customCodeApi.getBatchStatus(siteId, pageIds, sessionToken);
+  }
+};
+
+export const applyScriptToTarget = async (
+  sessionToken: string,
+  scriptId: string,
+  targetType: "site" | "page",
+  targetId: string,
+  location: "header" | "footer"
+): Promise<void> => {
+  const params: CodeApplication = {
+    scriptId,
+    targetType,
+    targetId,
+    location,
+  };
+
+  await customCodeApi.applyScript(params, sessionToken);
+};
+
+export const fetchScripts = async (sessionToken: string, siteId: string) => {
+  const response = await customCodeApi.getScripts(siteId, sessionToken);
+  return response.result || [];
+};
+
+export default customCodeApi;
